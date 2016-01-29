@@ -1,9 +1,11 @@
 # Syntax of the command:
+#------------------------------------
 #  python movielens.py fill_by_type 
+#------------------------------------
 #
 #  'fill_by_type' can be 'fill_by_movie' or 'fill_by_user'
 #  allows you to custom the method for filling the R matrix
-#  when a film was not rated by a user.
+#  when a film was not rated by an user.
 
 
 
@@ -15,14 +17,14 @@ import matplotlib.pyplot as plt
 import pylab as pl
 
 
-#check of the arguments
+#====================== check of the arguments =========================
 if argv[1]!='fill_by_user' and argv[1]!='fill_by_movie':
   print 'Invalid filling method. Please use one of the following arguments:\nfill_by_movie\nfill_by_user'
   print '\nsyntax: python movielens.py fill_method'
   exit()
 
 
-#load the data
+#====================== load the data ==================================
 print 'loading data...'
 with open('u1.base', 'rb') as f:
   fieldnames=['user','movie','rating','datestamp']
@@ -53,7 +55,7 @@ Nmovies=len(Items)
 Nusers=len(Users)
 
 
-#Build a user-item matrix R
+#====================== Build a user-item matrix R =====================
 print 'building R matrix...'
 R=zeros((Nusers,Nmovies))
 b=0
@@ -62,7 +64,7 @@ for rating in baseU1:
 print "R built.\n"
 
 
-#Compute the rating means
+#====================== Compute the means ==============================
 print "computing rating means on each movie..."
 movieMeans=[]
 for movie in R.T:
@@ -71,7 +73,6 @@ for movie in R.T:
   else:
     movieMeans.append(0)  #If the movie has not been rated by anyone.
 
-#Compute the user means
 print "computing rating means on each user..."
 userMeans=[]
 for user in R:
@@ -81,7 +82,7 @@ for user in R:
 
 
 
-#Fill both matrices Rc and Rr
+#==================== Fill both matrices Rc and Rr =====================
 print 'filling R (both versions)...'
 Rr=array([ [R[i,j] for j in xrange(Nmovies)] for i in xrange(Nusers) ])
 Rc=array([ [R[i,j] for j in xrange(Nmovies)] for i in xrange(Nusers) ])
@@ -101,9 +102,7 @@ print 'Rc (by movie) and Rr (by user) filled.\n'
 
 
 
-
-
-#Plot the matrices
+#====================== Plot the matrices ==============================
 
 plt.imshow(R, interpolation='none')
 plt.ylabel('User Id')
@@ -111,13 +110,11 @@ plt.xlabel('Film Id')
 plt.title('R not filled')
 plt.show()
 
-
 plt.imshow(Rc, interpolation='none')
 plt.ylabel('User Id')
 plt.xlabel('Film Id')
 plt.title('Filled with the movie\'s ratings mean')
 plt.show()
-
 
 plt.imshow(Rr, interpolation='none')
 plt.ylabel('User Id')
@@ -127,9 +124,7 @@ plt.show()
 
 
 
-
-
-#compute the SVD
+#====================== compute the SVD ================================
 print 'computing SVD decomposition with %s method:'%argv[1]
 if argv[1]=='fill_by_movie':
   u,diags,v= linalg.svd(Rc, full_matrices=0)
@@ -139,9 +134,6 @@ if argv[1]=='fill_by_user':
   u,diags,v= linalg.svd(Rr, full_matrices=0)
   s=diag(diags)
   print 'SVD: allclose(Rr,U.S.V\'):',allclose(Rr,dot(u,dot(s,v)))
-
-
-
 
 
 
@@ -161,7 +153,7 @@ for k in xrange(1,31):
 
 
 
-  #Compare the predictions with the real ratings
+  #Compare the predictions with the real ratings:
   MAE=0
   for dic in testU1:
     prediction=dot( Uk[dic['user']-1,:] , dot( Sk , Vk[:,dic['movie']-1] ))
@@ -172,25 +164,27 @@ for k in xrange(1,31):
 
 
 
-  #Build the feature-matrices Xk and Yk
+  #Build the feature-matrices Xk and Yk:
   sqrtSk=diag(map(sqrt,diags[:k]))
   Xk = dot(Uk , sqrtSk )
   Yk = dot(sqrtSk , Vk)
 
 
-#Find the best approximation:
+
+
+#====================== Find the best approximation ====================
 k=range(1,31)
 plt.plot(k,remindMAE)
 plt.plot([0],[0.79])
 plt.plot([0],[0.835])
-plt.ylim(0.79,0.84)  #error
+plt.ylim(0.79,0.84)
 plt.title('Mean Absolute Error=f(k)')
 plt.xlabel('Number of singular values kept in the approximation of R')
 plt.ylabel('MAE')
 plt.show()
 
 
-#Compare the predictions
+#====================== Compare the predictions ========================
 Sk=s[:12,:12]
 Uk=transpose(u.T[:12])  #Let's use k=12 for this part
 Vk=v[:12]
@@ -212,7 +206,7 @@ print 'The mean difference between the SVD approximation and the true naive meth
 
 
 """
-#Ordinary Least Squares
+#====================== Ordinary Least Squares =========================
 W=R>0
 
 k=12
