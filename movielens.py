@@ -209,35 +209,42 @@ print 'The mean difference between the SVD approximation and the true naive meth
 #====================== Ordinary Least Squares =========================
 W=R>0
 
-k=12
-nbrIter=250
-X=ones((Nusers,k))
-Y=ones((k,Nmovies))
+k=3
+lambda_=0.02
+nbrIter=10
+X=ones((Nusers,k), dtype=float)
+Y=ones((k,Nmovies), dtype=float)
 
 remindMAE=[]
-for j in xrange(nbrIter):
+
+for iteration in range(nbrIter):
+
   for u in xrange(Nusers):
-    A=Y.T
-    b=R[u].T
-    U,s,V=linalg.svd(A, full_matrices=0)
-    z=dot( diag([1.0/i for i in s]) , dot(U.T,b) )
-    x=dot(V,z)
-    X[u]=x.T
+    YWu = dot(Y , diag(W[u]))
+    A = dot( YWu, Y.T) + lambda_*eye(k)
+    b = dot( YWu, (R[u]).T )
+    X[u,:] = linalg.solve( A , b ).T
   for i in xrange(Nmovies):
-    A=X
-    b=R[:,i]
-    U,s,V=linalg.svd(A, full_matrices=0)
-    z=dot( diag([1.0/u for u in s]) , dot(U.T,b) )
-    x=dot(V,z)
-    Y[:,i]=x
+    XTWi = dot( X.T , diag(W[:,i]) )
+    A = dot( XTWi , X ) + lambda_*eye(k)
+    b = dot( XTWi , R[:,i] )
+    Y[:,i] = linalg.solve(  A , b )
+
   MAE=0
   for dic in testU1:
     prediction=dot( X[dic['user']-1,:] , Y[:,dic['movie']-1] )
     MAE += abs( prediction - dic['rating'] )
   MAE /= float(len(testU1))
-  print "j=%d, MAE= %d\n"%(j,MAE)
+  print "MAE= %f\n"%MAE
   remindMAE.append(MAE)
-plt.xlabel("Nombre d'iterations")
-plt.ylabel("MAE")
-plt.plot(range(nbrIter)[2:], remindMAE[2:])
-plt.show()
+
+
+pl.plot(range(nbrIter),remindMAE)
+pl.title('Mean Absolute Error = f(nbIter)')
+pl.suptitle('MAE with predictions based on the product X&Y')
+pl.xlabel('nbrIter')
+pl.ylabel('MAE')
+print min(remindMAE)
+pl.show()
+
+
