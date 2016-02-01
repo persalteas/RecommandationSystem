@@ -100,7 +100,7 @@ for i,user in enumerate(R):
 print 'Rc (by movie) and Rr (by user) filled.\n'
 
 
-
+"""
 
 #====================== Plot the matrices ==============================
 
@@ -203,14 +203,14 @@ def absdiff(a,b):
 differences=map(absdiff , predictions_svd , predictions_naive)
 print 'The mean difference between the SVD approximation and the true naive method is of %f stars.'%(mean(differences))
 
-
-
 """
+
+
 #====================== Ordinary Least Squares =========================
 W=R>0
 
 k=12
-nbrIter=25
+nbrIter=250
 X=ones((Nusers,k))
 Y=ones((k,Nmovies))
 
@@ -237,6 +237,7 @@ for j in xrange(nbrIter):
   MAE /= float(len(testU1))
   print "j=%d, MAE= %d\n"%(j,MAE)
   remindMAE.append(MAE)
-
+plt.xlabel("Nombre d'iterations")
+plt.ylabel("MAE")
 plt.plot(range(nbrIter)[2:], remindMAE[2:])
-plt.show()"""
+plt.show()

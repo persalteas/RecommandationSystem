@@ -75,8 +75,14 @@ Il s'agit donc d'un problème des moindres carrés linéaire.\\
 
 Et plus directement, le rôle de la colonne $Y_i$ est de permettre le calcul des valeurs de la colonne $R_i$, donc:
 $$X.Y_i \approx R_i$$
-Il s'agit là aussi d'un problème des moindres carrés linéaire.
+Il s'agit là aussi d'un problème des moindres carrés linéaire.\\
 
+Choisissons donc une matrice Y arbitraire, par exemple pleine de 1. On va donc résoudre le problème linéaire $Y^T.X_u^T= R_u^T$ pour chaque ligne $X_u$, ce qui nous donnera une matrice X. Connaissant cette matrice X, on résout le problème $X.Y_i = R_i$ pour préciser notre matrice Y. On répète ce schéma un certain nombre de fois en espérant que X et Y convergent vers une solution qui minimise l'erreur moyenne absolue. On obtient les résultats suivants:
 
-
+\begin{figure}[h]
+\centering
+\includegraphics[scale=0.5]{least-squares-MAE.png}
+\caption{Des MAE de l'ordre de $10^{12}$ pour 250 itérations...}
+\end{figure}
+On remarque donc que cette méthode converge, mais beaucoup trop lentement à notre goût. \textit{(Diminution d'une puissance de 10 en moyenne en 200 itérations = 10 minutes de calcul)}
 \end{document}
