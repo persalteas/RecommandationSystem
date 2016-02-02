@@ -1,9 +1,11 @@
 \documentclass[12pt,a4paper]{article}
 \usepackage[T1]{fontenc}
 \usepackage[utf8]{inputenc}
-\usepackage[margin=2.5cm]{geometry}
+\usepackage[margin=2cm]{geometry}
 \usepackage[francais]{babel}
 \usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{subfig}
 
 
 \begin{document}
@@ -85,4 +87,73 @@ Choisissons donc une matrice Y arbitraire, par exemple pleine de 1. On va donc r
 \caption{Des MAE de l'ordre de $10^{12}$ pour 250 itérations...}
 \end{figure}
 On remarque donc que cette méthode converge, mais beaucoup trop lentement à notre goût. \textit{(Diminution d'une puissance de 10 en moyenne en 200 itérations = 10 minutes de calcul)}
+
+\newpage
+Cherchons donc plutôt des matrices X et Y de taille plus petite: $943\times k$ et $k\times 1682$.\\
+Puis restreignons les calculs aux coefficients non nuls de R, et accordons nous une erreur $\lambda$ au sens des moindres carrés. On cherche donc les lignes u de X et les colonnes i de Y telles que la quantité
+$$\sum_{u,i} (R_{u,i}-X_uY_i)^2+\lambda \left(\sum_u ||X_u||^2 + \sum_i ||X_i||^2 \right) \text{soit minimisée.}$$
+
+On crée donc une matrice W de même taille que R, dont les valeurs sont 1 si $R_{u,i} \neq 0$, zéro sinon. Cela revient à minimiser les fonctions suivantes sur $X_u$ et $Y_i$ :
+$$\begin{array}{l}
+\text{Pour Y fixé, } F(X_u) = (R_u -X_uY) diag(W_u) (R_u -X_uY)^* + \lambda X_u X_u^*\\
+\text{Pour X fixé, } G(Y_i) = (R_i -XY_i)^* diag(W_i) (R_i -XY_i) + \lambda Y_i^*Y_i\\
+\end{array}$$
+Le minimum local de ces deux fonctions correspondra au minimum local de la quantité ci-dessus. On cherche donc ce point, pour lequel $\frac{\partial F}{\partial X_u}=\frac{\partial G}{\partial Y_i}=0$.
+
+$$F(X_u) = (R_u -X_uY) diag(W_u) (R_u -X_uY)^* + \lambda X_u X_u^*$$
+$$F(X_u) = (R_u^* -Y^*X_u^*)^* diag(W_u) (R_u^* -Y^*X_u^*) + \lambda X_u X_u^*$$
+$$0=\frac{dF(X_u)}{dX_u}=\frac{dx}{dX_u}\frac{dF}{dx}+\lambda \frac{d}{dX_u}(X_uX_u^*) \text{ avec } x=R_u^* -Y^*X_u^*$$
+$$0=-Y.2.diag(W_u)(R_u^*-Y^*X_u^*)+2.\lambda.X_u^*$$
+$$0=Y.diag(W_u).(Y^*X_u^*-R_u^*)+\lambda X_u^*$$
+$$0=Y.diag(W_u).Y^*X_u^*-Y.diag(W_u).R_u^*+\lambda X_u^*$$
+$$\text{Donc }(Y.diag(W_u).Y^*+\lambda I)X_u^* = Y.diag(W_u).R_u^*$$
+\begin{center}
+\fbox{$X_u=\left[ (Y.diag(W_u).Y^*+\lambda I)^{-1}.(Y.diag(W_u).R_u^*) \right]^*$}
+\end{center}
+Cette équation normale nous donne la capacité d'estimer X quand on connaît R, W, $\lambda$, et Y. On peut faire de même pour trouver une expression de $Y_i$:
+$$G(Y_i) = (R_i -XY_i)^* diag(W_i) (R_i -XY_i) + \lambda Y_i^*Y_i$$
+$$0=\frac{dG(Y_i)}{dY_i}=\frac{dx}{dY_i}\frac{dG}{dx}+\lambda \frac{d}{dY_i}(Y_i^*Y_i)\text{ avec }x=R_i-XY_i$$
+$$0=-X^*.2.diag(W_i)(R_i -XY_i) + \lambda 2 Y_i$$
+$$0=X^*diag(W_i)(XY_i-R_i)+\lambda Y_i$$
+$$0=X^*.diag(W_i)XY_i-X^*diag(W_i)R_i+\lambda Y_i$$
+$$\text{Donc }(X^*diag(W_i)X+\lambda I)Y_i=X^*diag(W_i)R_i$$
+\begin{center}
+\fbox{$Y_i = (X^*diag(W_i)X+\lambda I)^{-1}.(X^*diag(W_i)R_i)$}
+\end{center}
+On a transformé le problème des moindres carrés non linéaire en deux problèmes linéaires (\textit{de type $A.x=b$ avec A et b connus}), qu'on va résoudre par une approche itérative: prendre deux matrices X et Y arbitraires (pleines de 1), estimer X, puis estimer Y avec ce X, puis recommencer un certain nombre d'itérations en espérant converger vers des solutions minimisant la MAE:
+\newpage
+\begin{table}[h]
+\begin{tabular}{cc}
+\subfloat[Pour k=3 ; $\lambda=0.02$]{\includegraphics[scale=0.3]{MAE-least-squares-k3-l002.png}}
+&
+\subfloat[Pour k=3 ; $\lambda=0.80$]{\includegraphics[scale=0.3]{MAE-least-squares-k3-l080.png}}
+\end{tabular}
+\end{table}
+
+\begin{table}[h]
+\begin{tabular}{cccc}
+\subfloat[X*Y à la $1^{ere}$ itération]{\includegraphics[scale=0.2]{it1-k3.png}}
+&
+\subfloat[X*Y à la $2^e$ itération \textit{(meilleure MAE)}]{\includegraphics[scale=0.2]{it2-k3.png}}
+&
+\subfloat[X*Y à la $3^e$ itération]{\includegraphics[scale=0.2]{it3-k3.png}}
+&
+\subfloat[X*Y à la $10^e$ itération]{\includegraphics[scale=0.2]{it10-k3.png}}
+\end{tabular}
+\caption{Pour k=3, $\lambda$=0.02}
+\end{table}
+
+\begin{table}[h]
+\begin{tabular}{cccc}
+\subfloat[X*Y à la $1^{ere}$ itération]{\includegraphics[scale=0.2]{it1-k3-l80.png}}
+&
+\subfloat[X*Y à la $2^e$ itération]{\includegraphics[scale=0.2]{it2-k3-l80.png}}
+&
+\subfloat[X*Y à la $10^e$ itération]{\includegraphics[scale=0.2]{it10-k3-l80.png}}
+&
+\subfloat[X*Y à la $50^e$ itération]{\includegraphics[scale=0.2]{it50-k3-l80.png}}
+\end{tabular}
+\caption{Pour k=3, $\lambda$=0.80}
+\end{table}
+
 \end{document}

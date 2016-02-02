@@ -9,19 +9,12 @@
 
 
 
-
 from csv import *
 from numpy import *
 from sys import argv
 import matplotlib.pyplot as plt
 import pylab as pl
 
-
-#====================== check of the arguments =========================
-if argv[1]!='fill_by_user' and argv[1]!='fill_by_movie':
-  print 'Invalid filling method. Please use one of the following arguments:\nfill_by_movie\nfill_by_user'
-  print '\nsyntax: python movielens.py fill_method'
-  exit()
 
 
 #====================== load the data ==================================
@@ -64,6 +57,16 @@ for rating in baseU1:
 print "R built.\n"
 
 
+"""
+
+#====================== check of the arguments =========================
+if argv[1]!='fill_by_user' and argv[1]!='fill_by_movie':
+  print 'Invalid filling method. Please use one of the following arguments:\nfill_by_movie\nfill_by_user'
+  print '\nsyntax: python movielens.py fill_method'
+  exit()
+
+
+
 #====================== Compute the means ==============================
 print "computing rating means on each movie..."
 movieMeans=[]
@@ -100,7 +103,7 @@ for i,user in enumerate(R):
 print 'Rc (by movie) and Rr (by user) filled.\n'
 
 
-"""
+
 
 #====================== Plot the matrices ==============================
 
@@ -209,39 +212,49 @@ print 'The mean difference between the SVD approximation and the true naive meth
 #====================== Ordinary Least Squares =========================
 W=R>0
 
-k=3
+k=12
 lambda_=0.02
-nbrIter=10
+nbrIter=50
+print "Now we set X and Y full of ones.\n"
 X=ones((Nusers,k), dtype=float)
 Y=ones((k,Nmovies), dtype=float)
 
 remindMAE=[]
 
 for iteration in range(nbrIter):
-
+  print "iteration %d."%(iteration+1)
+  print "estimating X..."
   for u in xrange(Nusers):
     YWu = dot(Y , diag(W[u]))
     A = dot( YWu, Y.T) + lambda_*eye(k)
     b = dot( YWu, (R[u]).T )
     X[u,:] = linalg.solve( A , b ).T
+  print "estimating Y..."
   for i in xrange(Nmovies):
     XTWi = dot( X.T , diag(W[:,i]) )
     A = dot( XTWi , X ) + lambda_*eye(k)
     b = dot( XTWi , R[:,i] )
     Y[:,i] = linalg.solve(  A , b )
-
+    
+  print "estimating the MAE with X*Y predictions..."
   MAE=0
   for dic in testU1:
     prediction=dot( X[dic['user']-1,:] , Y[:,dic['movie']-1] )
     MAE += abs( prediction - dic['rating'] )
   MAE /= float(len(testU1))
-  print "MAE= %f\n"%MAE
+  print "MAE= %f\n\n"%MAE
   remindMAE.append(MAE)
 
+XY=dot(X,Y)
+plt.imshow(XY, interpolation='none')
+plt.ylabel('User Id')
+plt.xlabel('Film Id')
+plt.title('X*Y product')
+plt.show()
 
 pl.plot(range(nbrIter),remindMAE)
 pl.title('Mean Absolute Error = f(nbIter)')
-pl.suptitle('MAE with predictions based on the product X&Y')
+pl.suptitle('MAE with predictions based on the product X*Y')
 pl.xlabel('nbrIter')
 pl.ylabel('MAE')
 print min(remindMAE)
