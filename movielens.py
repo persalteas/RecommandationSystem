@@ -212,9 +212,9 @@ print 'The mean difference between the SVD approximation and the true naive meth
 #====================== Ordinary Least Squares =========================
 W=R>0
 
-k=12
+k=3
 lambda_=0.02
-nbrIter=50
+nbrIter=35
 print "Now we set X and Y full of ones.\n"
 X=ones((Nusers,k), dtype=float)
 Y=ones((k,Nmovies), dtype=float)
@@ -226,15 +226,13 @@ for iteration in range(nbrIter):
   print "estimating X..."
   for u in xrange(Nusers):
     YWu = dot(Y , diag(W[u]))
-    A = dot( YWu, Y.T) + lambda_*eye(k)
-    b = dot( YWu, (R[u]).T )
-    X[u,:] = linalg.solve( A , b ).T
+    X[u,:] = linalg.solve(  dot( YWu, Y.T) + lambda_*eye(k) , 
+                            dot( YWu, (R[u]).T ) ).T
   print "estimating Y..."
   for i in xrange(Nmovies):
     XTWi = dot( X.T , diag(W[:,i]) )
-    A = dot( XTWi , X ) + lambda_*eye(k)
-    b = dot( XTWi , R[:,i] )
-    Y[:,i] = linalg.solve(  A , b )
+    Y[:,i] = linalg.solve(  dot( XTWi , X ) + lambda_*eye(k) , 
+                            dot( XTWi , R[:,i] ) )
     
   print "estimating the MAE with X*Y predictions..."
   MAE=0
@@ -244,20 +242,21 @@ for iteration in range(nbrIter):
   MAE /= float(len(testU1))
   print "MAE= %f\n\n"%MAE
   remindMAE.append(MAE)
+  #~ if iteration in [0,1,2,9,34]:
+    #~ XY=dot(X,Y)
+    #~ plt.imshow(XY, interpolation='none')
+    #~ plt.ylabel('User Id')
+    #~ plt.xlabel('Film Id')
+    #~ plt.title('X*Y product')
+    #~ plt.savefig("it%d-k%d-l%d.png"%(iteration+1,k,100*lambda_),dpi=300,format='png')
 
-XY=dot(X,Y)
-plt.imshow(XY, interpolation='none')
-plt.ylabel('User Id')
-plt.xlabel('Film Id')
-plt.title('X*Y product')
-plt.show()
-
-pl.plot(range(nbrIter),remindMAE)
-pl.title('Mean Absolute Error = f(nbIter)')
-pl.suptitle('MAE with predictions based on the product X*Y')
-pl.xlabel('nbrIter')
-pl.ylabel('MAE')
+plt.plot(range(nbrIter),remindMAE)
+plt.title('Mean Absolute Error = f(nbIter)')
+plt.suptitle('MAE with predictions based on the product X*Y')
+plt.xlabel('nbrIter')
+plt.ylabel('MAE')
+plt.ylim(0.73,0.80)
 print min(remindMAE)
-pl.show()
+pl.savefig("MAE-least-squares-k%d-l%d.png"%(k,100*lambda_),dpi=72,format='png')
 
 

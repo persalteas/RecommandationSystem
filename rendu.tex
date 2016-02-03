@@ -124,21 +124,21 @@ On a transformé le problème des moindres carrés non linéaire en deux problè
 \newpage
 \begin{table}[h]
 \begin{tabular}{cc}
-\subfloat[Pour k=3 ; $\lambda=0.02$]{\includegraphics[scale=0.3]{MAE-least-squares-k3-l002.png}}
+\subfloat[Pour k=3 ; $\lambda=0.02$]{\includegraphics[scale=0.3]{MAE-least-squares-k3-l2.png}}
 &
-\subfloat[Pour k=3 ; $\lambda=0.80$]{\includegraphics[scale=0.3]{MAE-least-squares-k3-l080.png}}
+\subfloat[Pour k=3 ; $\lambda=0.80$]{\includegraphics[scale=0.3]{MAE-least-squares-k3-l80.png}}
 \end{tabular}
 \end{table}
 
 \begin{table}[h]
 \begin{tabular}{cccc}
-\subfloat[X*Y à la $1^{ere}$ itération]{\includegraphics[scale=0.2]{it1-k3.png}}
+\subfloat[X*Y à la $1^{ere}$ itération]{\includegraphics[scale=0.2]{it1-k3-l2.png}}
 &
-\subfloat[X*Y à la $2^e$ itération \textit{(meilleure MAE)}]{\includegraphics[scale=0.2]{it2-k3.png}}
+\subfloat[X*Y à la $2^e$ itération \textit{(meilleure MAE)}]{\includegraphics[scale=0.2]{it2-k3-l2.png}}
 &
-\subfloat[X*Y à la $3^e$ itération]{\includegraphics[scale=0.2]{it3-k3.png}}
+\subfloat[X*Y à la $3^e$ itération]{\includegraphics[scale=0.2]{it3-k3-l2.png}}
 &
-\subfloat[X*Y à la $10^e$ itération]{\includegraphics[scale=0.2]{it10-k3.png}}
+\subfloat[X*Y à la $10^e$ itération]{\includegraphics[scale=0.2]{it10-k3-l2.png}}
 \end{tabular}
 \caption{Pour k=3, $\lambda$=0.02}
 \end{table}
@@ -151,9 +151,44 @@ On a transformé le problème des moindres carrés non linéaire en deux problè
 &
 \subfloat[X*Y à la $10^e$ itération]{\includegraphics[scale=0.2]{it10-k3-l80.png}}
 &
-\subfloat[X*Y à la $50^e$ itération]{\includegraphics[scale=0.2]{it50-k3-l80.png}}
+\subfloat[X*Y à la $50^e$ itération]{\includegraphics[scale=0.2]{it35-k3-l80.png}}
 \end{tabular}
 \caption{Pour k=3, $\lambda$=0.80}
 \end{table}
+\newpage
 
+
+\begin{table}[h]
+\begin{tabular}{cc}
+\subfloat[Pour k=12 ; $\lambda=0.02$]{\includegraphics[scale=0.4]{MAE-least-squares-k12-l2.png}}
+&
+\subfloat[Pour k=12 ; $\lambda=0.80$]{\includegraphics[scale=0.4]{MAE-least-squares-k12-l80.png}}
+\end{tabular}
+\end{table}
+
+\begin{table}[h]
+\begin{tabular}{cccc}
+\subfloat[X*Y à la $1^{ere}$ itération]{\includegraphics[scale=0.2]{it1-k12-l2.png}}
+&
+\subfloat[X*Y à la $2^e$ itération \textit{(meilleure MAE)}]{\includegraphics[scale=0.2]{it2-k12-l2.png}}
+&
+\subfloat[X*Y à la $3^e$ itération]{\includegraphics[scale=0.2]{it3-k12-l2.png}}
+&
+\subfloat[X*Y à la $10^e$ itération]{\includegraphics[scale=0.2]{it10-k12-l2.png}}
+\end{tabular}
+\caption{Pour k=12, $\lambda$=0.02}
+\end{table}
+
+\begin{table}[h]
+\begin{tabular}{cccc}
+\subfloat[X*Y à la $1^{ere}$ itération]{\includegraphics[scale=0.2]{it1-k12-l80.png}}
+&
+\subfloat[X*Y à la $2^e$ itération]{\includegraphics[scale=0.2]{it2-k12-l80.png}}
+&
+\subfloat[X*Y à la $10^e$ itération]{\includegraphics[scale=0.2]{it10-k12-l80.png}}
+&
+\subfloat[X*Y à la $50^e$ itération]{\includegraphics[scale=0.2]{it35-k12-l80.png}}
+\end{tabular}
+\caption{Pour k=12, $\lambda$=0.80}
+\end{table}
 \end{document}
