@@ -60,16 +60,16 @@ print "R built.\n"
 
 
 
-#~ '''
+
 #====================== check of the arguments =========================
 if len(argv)==1:
   print 'Please chose a filling method as argument:\nfill_by_movie\nfill_by_user'
   print '\nsyntax: python movielens.py fill_method'
-  exit('No filling method')
+  exit('\nExit: No filling method')
 elif argv[1]!='fill_by_user' and argv[1]!='fill_by_movie':
   print 'Invalid filling method. Please use one of the following arguments:\nfill_by_movie\nfill_by_user'
   print '\nsyntax: python movielens.py fill_method'
-  exit('Wrong filling method')
+  exit('\nExit: Wrong filling method')
 
 
 
@@ -107,10 +107,10 @@ for i,user in enumerate(R):
       Rr[i,j]=userMeans[i]
 
 print 'Rc (by movie) and Rr (by user) filled.\n'
-#~ '''
 
 
-"""
+
+
 #====================== Plot the matrices ==============================
 
 plt.imshow(R, interpolation='none')
@@ -130,9 +130,9 @@ plt.ylabel('User Id')
 plt.xlabel('Film Id')
 plt.title('Filled with the user\'s ratings mean')
 plt.show()
-"""
 
-#~ '''
+
+
 #====================== compute the SVD ================================
 start_time = time()
 print 'computing SVD decomposition with %s method:'%argv[1]
@@ -158,16 +158,17 @@ Y = dot(sqrtSk , Vk)
 print 'Computation time:', time() - start_time ,"seconds.\n"
 
 
+'''
 #====================== Make a prediction ==============================
-dic = testU1[1]
+dic = testU1[1]   #prediction for the first rating of the dataset
 start_time = time()
 prediction=dot( Uk[dic['user']-1,:] , dot( Sk , Vk[:,dic['movie']-1] ))
 print 'Prediction obtained in ', time() - start_time ,"seconds.\n"
-#~ '''
+'''
 
 
 
-"""
+
 #====================== Study of MAE(k) ================================
 remindMAE=[]
 for k in xrange(1,31):
@@ -228,14 +229,15 @@ def absdiff(a,b):
 differences=map(absdiff , predictions_svd , predictions_naive)
 print 'The mean difference between the SVD approximation and the true naive method is of %f stars.'%(mean(differences))
 
-"""
 
-'''
+
+
+
 #====================== Ordinary Least Squares =========================
 from multiprocessing import Process, Queue, cpu_count
 q = Queue()
 W=R>0
-'''
+
 
 '''
 #===== Study of MAE with k and lambda : Compute MAE-data.txt ===========
@@ -346,7 +348,7 @@ for k in krange:
     fichier.close()
 '''
 
-'''
+
 #==================== Plot 3D from MAE-data.txt ========================
 print "reading data..."
 from mpl_toolkits.mplot3d import *
@@ -391,19 +393,20 @@ plt.ylim(0,lmax)
 ax.set_zlim(0.73,0.95)
 plt.show()
 #~ plt.savefig("MAE-least-squares.png",dpi=72,format='png')
-'''
 
-'''
+
+
 #====================== Compute X and Y ================================
 start_time_global = time()
 
-nbrIter = 1
+nbrIter = 10
 lambda_ = 0.85
 k = 2
 
 X=ones((Nusers,k), dtype=float)
 Y=ones((k,Nmovies), dtype=float)
 print "Now we set X and Y full of ones.\n"
+print "Estimation of the time needed:",11*nbrIter/60.0,"min"
 remindMAE=["\nl=%f\n"%lambda_]
 
 for iteration in range(nbrIter):
@@ -419,11 +422,10 @@ for iteration in range(nbrIter):
     Y[:,i] = linalg.solve(  dot( XTWi , X ) + lambda_*eye(k) , dot( XTWi , R[:,i] ) )
   print 'Computation time:', time() - start_time ,"sec"
   
-print 'Computation time in seconds:', time() - start_time_global
-
-print dot(X,Y)
+print 'X and Y computed in', (time() - start_time_global)/60,"min."
 
 
+'''
 #====================== Make a prediction ==============================
 dic = testU1[1]
 start_time = time()
@@ -436,6 +438,7 @@ print 'Prediction obtained in ', time() - start_time ,"seconds.\n"
 #====================== Recommandations ================================
 nRec = 20
 userID = 944
+start_time = time()
 
 Recommend = []
 rated = []
@@ -447,12 +450,14 @@ for rating in baseU1:
     rated.append(rating['movie'])
 for movie in xrange(Nmovies):
   note = XuY[movie]
-  if movie not in rated and note>=3:
-    Recommend.append( (note,movie) )
+  if note>=3.5 and not((1+movie) in rated):
+    Recommend.append( (note,1+movie) )
 
 Recommend.sort()
 Recommend = Recommend[-nRec:]
 Recommend.reverse()
-print "We recommend to user %d the following movies:"%userID
+print "\nWe recommend to user %d the following %d movies:\n"%(userID,nRec)
 for movie in Recommend:
-  print Items[movie[1]]['name']
+  print Items[movie[1]-1]['name'], " ==>[ item",Items[movie[1]-1]['itemcode'],"]"
+print "\nRecommendation computed in %f seconds."%(time() - start_time)
+

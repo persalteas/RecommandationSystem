@@ -16,7 +16,9 @@
 \newpage
 
 \section{Question A - Chargez les données}
-Les données du site movielens.org sont chargées dans des dictionnaires python.
+Les données du site movielens.org sont chargées dans des dictionnaires python.\\
+
+Voir: \textit{http://grouplens.org/datasets/movielens/100k/}
 \section{Question B - Matrice Utilisateur-Item}
 On construit une matrice R de 943 lignes (les utilisateurs) et 1682 colonnes (les films).
 \begin{figure}[h!]
@@ -216,7 +218,7 @@ On a transformé le problème des moindres carrés non linéaire en deux problè
 
 On voit qu'on observe une homogénéisation des notes au bout d'un certain nombre d'itérations.\\
 Attention cependant: Il s'agit possiblement de fausses observations dues à la façon dont les couleurs sont gérées ci-dessus. 
-Si certains points très discrets sont loin hors de l'intervalle [0;5], ils pourraient faire passer toutes les notes de cet intervalle pour des notes "moyennes" vertes.\\
+Si certains points très discrets sont loin hors de l'intervalle [0;5], ils pourraient faire passer toutes les notes de cet intervalle pour des notes "faibles" vertes.\\
 
 \newpage
 
@@ -232,6 +234,9 @@ Pour ce qui est de la convergence de cet algorithme vers une solution, on obtien
 \subfloat[à 35 itérations]{\includegraphics[scale=0.4]{MAE-least-squares-35.png}}\\
 \end{tabular}
 \end{table}
+
+\textit{Ces résultats ont été obtenus après de longues heures de calcul, grâce au module python "multiprocessing", voir le fichier "MAE-data.txt" fourni.}\\
+
 On retiendra que les meilleurs résultats sont obtenus pour de petites valeurs de k et de grandes valeurs de $\lambda$.\\
 
 On retiendra également qu'on converge bien vers un résultat stable lorsqu'on multiplie les itérations, cependant, on ne converge pas toujours vers une solution minimisant le plus la MAE.\\
@@ -294,7 +299,7 @@ On considère les méthodes avec les paramètres qui minimisent la MAE, à savoi
 \hline
  & Approximation par SVD & Approximation par moindres carrés\\
 \hline
-Temps de calcul de X et Y & $\approx$5 sec & $\approx$24 sec/iter (20 iter = 8 min) \\
+Temps de calcul de X et Y & $\approx$1 sec & $\approx$11 sec/iter (20 iter = 3 min) \\
 \hline
 Temps de prédiction & 40 $\mu sec$ & 9 $\mu sec$\\
 \hline
@@ -328,9 +333,79 @@ On pourrait alors:
 \end{itemize}
 Il faudrait trouver un moyen de prédire qu'une valeur $R_{u,i}$ sera hors intervalle sans avoir à calculer explicitement la matrice R, ni avoir besoin de calculer toutes les prédictions une à une.\\
  
- \section{Question I - Tester les Recommandations}
+\section{Question I - Tester les Recommandations}
  
- 
- 
- 
+Pour ceci, rajoutons un utilisateur (nous) aux données, et inscrivons quelques notes personnalisées:\\
+
+\begin{itemize}
+\item Toy Story (1995) : 4
+\item GoldenEye (1995) : 3
+\item Braveheart (1995) : 5
+\item Taxi Driver (1976) : 5
+\item Batman Forever (1995) : 5
+\item Star Wars (1977) : 5
+\item Professional, The (1994) : 5
+\item Stargate (1994) : 5
+\item Maverick (1994) : 2
+\item Fugitive, The (1993) : 4
+\item Jurassic Park (1993) : 2
+\item Blade Runner (1982) : 1
+\item Aladdin (1992) : 5
+\item Snow White and the Seven Dwarfs (1937) : 3
+\item Top Gun (1986) : 5
+\item Monty Python and the Holy Grail (1974) : 1
+\item Return of the Jedi (1983) : 5
+\item Dead Poets Society (1989) : 4
+\item Cyrano de Bergerac (1990) : 5
+\item Star Trek: Generations (1994) : 5
+\item Mrs. Doubtfire (1993) : 2
+\item Piano, The (1993) : 2
+\item Hunchback of Notre Dame, The (1996) : 3
+\item Microcosmos: Le peuple de l'herbe (1996) : 5
+\item In the Line of Fire (1993) : 4
+\item Pretty Woman (1990) : 4
+\item Twilight (1998) : 1
+\item Big Blue, The (Grand bleu, Le) (1988) : 5
+\end{itemize}
+\vspace{1cm}
+Précisons ensuite notre numéro d'utilisateur et le nombre de recommandations que l'on souhaite, on peut donc récupérer les numéros des films ayant la meilleure prédiction estimée (que nous n'avons pas déjà noté):\\
+Ici, pour 20 films, une approximation par SVD (k=12) et la matrice R remplie avec les moyennes de l'utilisateur:\\
+
+\begin{itemize}
+\item \begin{verbatim}Titanic (1997)  ==>[ item 313 ]\end{verbatim}
+\item \begin{verbatim}Raiders of the Lost Ark (1981)  ==>[ item 174 ]\end{verbatim}
+\item \begin{verbatim}Godfather, The (1972)  ==>[ item 127 ]\end{verbatim}
+\item \begin{verbatim}Empire Strikes Back, The (1980)  ==>[ item 172 ]\end{verbatim}
+\item \begin{verbatim}Forrest Gump (1994)  ==>[ item 69 ]\end{verbatim}
+\item \begin{verbatim}L.A. Confidential (1997)  ==>[ item 302 ]\end{verbatim}
+\item \begin{verbatim}Pulp Fiction (1994)  ==>[ item 56 ]\end{verbatim}
+\item \begin{verbatim}Get Shorty (1995)  ==>[ item 4 ]\end{verbatim}
+\item \begin{verbatim}Air Force One (1997)  ==>[ item 300 ]\end{verbatim}
+\item \begin{verbatim}Firm, The (1993)  ==>[ item 77 ]\end{verbatim}
+\item \begin{verbatim}Jerry Maguire (1996)  ==>[ item 237 ]\end{verbatim}
+\item \begin{verbatim}Terminator 2: Judgment Day (1991)  ==>[ item 96 ]\end{verbatim}
+\item \begin{verbatim}Net, The (1995)  ==>[ item 38 ]\end{verbatim}
+\item \begin{verbatim}Indiana Jones and the Last Crusade (1989)  ==>[ item 210 ]\end{verbatim}
+\item \begin{verbatim}English Patient, The (1996)  ==>[ item 286 ]\end{verbatim}
+\item \begin{verbatim}Very Brady Sequel, A (1996)  ==>[ item 412 ]\end{verbatim}
+\item \begin{verbatim}Beavis and Butt-head Do America (1996)  ==>[ item 240 ]\end{verbatim}
+\item \begin{verbatim}Back to the Future (1985)  ==>[ item 204 ]\end{verbatim}
+\item \begin{verbatim}Pocahontas (1995)  ==>[ item 542 ]\end{verbatim}
+\item \begin{verbatim}Bram Stoker's Dracula (1992)  ==>[ item 217 ]\end{verbatim}
+\end{itemize}
+\vspace{1cm}
+\textit{(Les recommandations sont calculées en 8 msec environ.)}\\
+\begin{itemize}
+\item Le résultat obtenu avec les moyennes des films est différent, et moins adapté malheureusement.
+\item Avec l'approximation par moindres carrés alternés, la liste est plutôt bonne à 1 itération, mais moins bonne à 20 itérations.
+\end{itemize}
+
+\subparagraph{Conclusion:} Le système de recommandation fonctionne. Cependant, la MAE n'est pas un estimateur parfait de la qualité des prédictions, comme on le voit si dessus:\\
+
+\begin{itemize}
+\item La méthode de remplissage avec les moyennes des films donnait une meilleure MAE, mais des prédictions qui me plaisent moins
+\item La méthode des moindres carrés, qui garde une MAE très stable au bout de plusieurs itérations, donne des listes de films de qualité très variable.
+\end{itemize}
+
+\textit{On peut donc conclure qu'il reste une grande part de hasard dans la prédiction.}
 \end{document}
