@@ -10,6 +10,7 @@
 
 
 from csv import *
+from time import time
 from numpy import *
 from sys import argv
 import matplotlib.pyplot as plt
@@ -44,6 +45,7 @@ with open('u.item', 'rb') as f:
 with open('u.occupation', 'rb') as f:
   reader = DictReader(f, fieldnames=['occupation'])
   Occupations = list(reader)
+
 Nmovies=len(Items)
 Nusers=len(Users)
 
@@ -57,13 +59,17 @@ for rating in baseU1:
 print "R built.\n"
 
 
-"""
 
+#~ '''
 #====================== check of the arguments =========================
-if argv[1]!='fill_by_user' and argv[1]!='fill_by_movie':
+if len(argv)==1:
+  print 'Please chose a filling method as argument:\nfill_by_movie\nfill_by_user'
+  print '\nsyntax: python movielens.py fill_method'
+  exit('No filling method')
+elif argv[1]!='fill_by_user' and argv[1]!='fill_by_movie':
   print 'Invalid filling method. Please use one of the following arguments:\nfill_by_movie\nfill_by_user'
   print '\nsyntax: python movielens.py fill_method'
-  exit()
+  exit('Wrong filling method')
 
 
 
@@ -101,10 +107,10 @@ for i,user in enumerate(R):
       Rr[i,j]=userMeans[i]
 
 print 'Rc (by movie) and Rr (by user) filled.\n'
+#~ '''
 
 
-
-
+"""
 #====================== Plot the matrices ==============================
 
 plt.imshow(R, interpolation='none')
@@ -124,10 +130,11 @@ plt.ylabel('User Id')
 plt.xlabel('Film Id')
 plt.title('Filled with the user\'s ratings mean')
 plt.show()
+"""
 
-
-
+#~ '''
 #====================== compute the SVD ================================
+start_time = time()
 print 'computing SVD decomposition with %s method:'%argv[1]
 if argv[1]=='fill_by_movie':
   u,diags,v= linalg.svd(Rc, full_matrices=0)
@@ -139,7 +146,29 @@ if argv[1]=='fill_by_user':
   print 'SVD: allclose(Rr,U.S.V\'):',allclose(Rr,dot(u,dot(s,v)))
 
 
+#========================= Compute X and Y =============================
+k = 12
+Sk=s[:k,:k]
+Uk=transpose(u.T[:k])
+Vk=v[:k]
+print 'approximation computed with only %d singular values.'%k
+sqrtSk=diag(map(sqrt,diags[:k]))
+X= dot(Uk , sqrtSk )
+Y = dot(sqrtSk , Vk)
+print 'Computation time:', time() - start_time ,"seconds.\n"
 
+
+#====================== Make a prediction ==============================
+dic = testU1[1]
+start_time = time()
+prediction=dot( Uk[dic['user']-1,:] , dot( Sk , Vk[:,dic['movie']-1] ))
+print 'Prediction obtained in ', time() - start_time ,"seconds.\n"
+#~ '''
+
+
+
+"""
+#====================== Study of MAE(k) ================================
 remindMAE=[]
 for k in xrange(1,31):
   #Approximation of R by keeping only k singular values:
@@ -166,16 +195,7 @@ for k in xrange(1,31):
   remindMAE.append(MAE)
 
 
-
-  #Build the feature-matrices Xk and Yk:
-  sqrtSk=diag(map(sqrt,diags[:k]))
-  Xk = dot(Uk , sqrtSk )
-  Yk = dot(sqrtSk , Vk)
-
-
-
-
-#====================== Find the best approximation ====================
+#Find the best approximation 
 k=range(1,31)
 plt.plot(k,remindMAE)
 plt.plot([0],[0.79])
@@ -187,10 +207,12 @@ plt.ylabel('MAE')
 plt.show()
 
 
+
 #====================== Compare the predictions ========================
-Sk=s[:12,:12]
-Uk=transpose(u.T[:12])  #Let's use k=12 for this part
-Vk=v[:12]
+k = 12  #Let's use k=12 for this part
+Sk=s[:k,:k]
+Uk=transpose(u.T[:k])  
+Vk=v[:k]
 print '\nComparing predictions between approximation and naive method...'
 predictions_svd=[]
 predictions_naive=[]
@@ -208,55 +230,229 @@ print 'The mean difference between the SVD approximation and the true naive meth
 
 """
 
-
+'''
 #====================== Ordinary Least Squares =========================
+from multiprocessing import Process, Queue, cpu_count
+q = Queue()
 W=R>0
+'''
 
-k=3
-lambda_=0.02
+'''
+#===== Study of MAE with k and lambda : Compute MAE-data.txt ===========
+#This part takes ~ 40 hours to compute all the MAE values for k in [1,12] and lambda in [0.05,0.9]
+#Output file : MAE-data.txt (included)
+
+def getMAE_numpy(k, lambda_, nbrIter):
+  X=ones((Nusers,k), dtype=float)
+  Y=ones((k,Nmovies), dtype=float)
+  print "Now we set X and Y full of ones.\n"
+  remindMAE=["\nl=%f\n"%lambda_]
+  
+  for iteration in range(nbrIter):
+    print "iteration %d."%(iteration+1)
+    print "estimating X..."
+    for u in xrange(Nusers):
+      YWu = dot(Y , diag(W[u]))
+      X[u,:] = linalg.solve(  dot( YWu, Y.T) + lambda_*eye(k) , 
+                            dot( YWu, (R[u]).T ) ).T
+    print "estimating Y..."
+    for i in xrange(Nmovies):
+      XTWi = dot( X.T , diag(W[:,i]) )
+      Y[:,i] = linalg.solve(  dot( XTWi , X ) + lambda_*eye(k) , 
+                            dot( XTWi , R[:,i] ) )
+      
+    print "estimating the MAE with X*Y predictions..."
+    MAE=0
+    for dic in testU1:
+      prediction=dot( X[dic['user']-1,:] , Y[:,dic['movie']-1] )
+      MAE += abs( prediction - dic['rating'] )
+    MAE /= float(len(testU1))
+    print "MAE= %f"%MAE
+    remindMAE.append(str(MAE))
+    
+  q.put(remindMAE)  #if used with multiprocessing
+  return remindMAE  #if used without multiprocessing
+
+
+def solveAxEQUb(A,b):
+  u,diags,v= linalg.svd(A, full_matrices=0)
+  z = linalg.solve( diag(diags) , dot(u.T,b) )
+  return dot( v , z )
+
+
+def getMAE_perso(k, lambda_, nbrIter):
+  X=ones((Nusers,k), dtype=float)
+  Y=ones((k,Nmovies), dtype=float)
+  print "Now we set X and Y full of ones.\n"
+  remindMAE=["\nl=%f\n"%lambda_]
+  
+  for iteration in range(nbrIter):
+    print "iteration %d."%(iteration+1)
+    print "estimating X..."
+    for u in xrange(Nusers):
+      YWu = dot(Y , diag(W[u]))
+      A = dot( YWu, Y.T) + lambda_*eye(k)
+      b = dot( YWu, (R[u]).T )
+      X[u,:] = solveAxEQUb( A , b ).T
+    print "estimating Y..."
+    for i in xrange(Nmovies):
+      XTWi = dot( X.T , diag(W[:,i]) )
+      A = dot( XTWi , X ) + lambda_*eye(k)
+      b = dot( XTWi , R[:,i] )
+      Y[:,i] = solveAxEQUb( A , b )
+      
+    print "estimating the MAE with X*Y predictions..."
+    MAE=0
+    for dic in testU1:
+      prediction=dot( X[dic['user']-1,:] , Y[:,dic['movie']-1] )
+      MAE += abs( prediction - dic['rating'] )
+    MAE /= float(len(testU1))
+    print "MAE= %f"%MAE
+    remindMAE.append(str(MAE))
+    
+  q.put(remindMAE)  #if used with multiprocessing
+  return remindMAE  #if used without multiprocessing
+
+
 nbrIter=35
-print "Now we set X and Y full of ones.\n"
+lambdaRange = [0.05, 1]
+krange = [1,2]
+
+Nproc = cpu_count() - 1  #adapts the algorithm to your number of CPU cores, to keep only one free
+print "We will use %d CPU cores on %d."%(Nproc, Nproc+1)
+
+for k in krange:
+  print "====================== k = %d ==========================="%k
+  fichier = open("MAE-data.txt","a")
+  fichier.write( "\nk = %d\n"%k )
+  fichier.close()
+  
+  for lambda_ in arange(lambdaRange[0], lambdaRange[1], 0.05*Nproc):
+    fichier = open("MAE-data.txt","a")
+    ProcessList = []
+    for i in range(cpu_count()):  #sets several processes for different lambdas in parallel
+      ProcessList.append( Process(target=getMAE_perso, args=(k, lambda_+0.05*i, nbrIter)) )
+      
+    for i,P in enumerate(ProcessList):  #starts the processes
+      print "lambda = %f"%(lambda_+0.05*i)
+      P.start()
+
+    for P in ProcessList:
+      remindMAE=q.get()
+      print remindMAE
+      fichier.write( " ".join(remindMAE))
+      P.join()  #Waits for the process' end
+  
+    fichier.close()
+'''
+
+'''
+#==================== Plot 3D from MAE-data.txt ========================
+print "reading data..."
+from mpl_toolkits.mplot3d import *
+from matplotlib import cm
+
+fig = plt.figure()
+ax = Axes3D(fig)
+
+nbrIter = 35
+lstep = 0.05
+lmax = 0.9
+kmax = 11
+krange = [0 for i in xrange(int((kmax-1)*lmax/lstep))]
+lrange = [0 for i in xrange(int((kmax-1)*lmax/lstep))]
+MAErange = [0 for i in xrange(int((kmax-1)*lmax/lstep))]
+
+fichier = open("MAE-data.txt", "r")
+lines = fichier.readlines()
+k=0
+l=0
+for line in lines:
+  if line[0]=='l':
+    l = float(line[2:])
+  if line[0]=='k':
+    k = int(line[2:])
+  if line[0]==' ' or line[0]=='0':
+    MAEvalues  = line.split()
+    pos = int(round(l/lstep + (k-2)*lmax/lstep-1,2))
+    MAErange[pos] = float(MAEvalues[nbrIter-1])
+    krange[pos] = k
+    lrange[pos] = l
+
+fichier.close()
+
+ax.plot_trisurf(krange, lrange, MAErange, cmap=cm.hot)
+plt.suptitle('MAE at %d iterations'%nbrIter)
+plt.title('MAE with predictions based on the product X*Y')
+plt.xlabel('k')
+plt.xlim(2,kmax)
+plt.ylabel('lambda')
+plt.ylim(0,lmax)
+ax.set_zlim(0.73,0.95)
+plt.show()
+#~ plt.savefig("MAE-least-squares.png",dpi=72,format='png')
+'''
+
+'''
+#====================== Compute X and Y ================================
+start_time_global = time()
+
+nbrIter = 1
+lambda_ = 0.85
+k = 2
+
 X=ones((Nusers,k), dtype=float)
 Y=ones((k,Nmovies), dtype=float)
-
-remindMAE=[]
+print "Now we set X and Y full of ones.\n"
+remindMAE=["\nl=%f\n"%lambda_]
 
 for iteration in range(nbrIter):
+  start_time = time()
   print "iteration %d."%(iteration+1)
   print "estimating X..."
   for u in xrange(Nusers):
     YWu = dot(Y , diag(W[u]))
-    X[u,:] = linalg.solve(  dot( YWu, Y.T) + lambda_*eye(k) , 
-                            dot( YWu, (R[u]).T ) ).T
+    X[u,:] = linalg.solve(  dot( YWu, Y.T) + lambda_*eye(k) , dot( YWu, (R[u]).T ) ).T
   print "estimating Y..."
   for i in xrange(Nmovies):
     XTWi = dot( X.T , diag(W[:,i]) )
-    Y[:,i] = linalg.solve(  dot( XTWi , X ) + lambda_*eye(k) , 
-                            dot( XTWi , R[:,i] ) )
-    
-  print "estimating the MAE with X*Y predictions..."
-  MAE=0
-  for dic in testU1:
-    prediction=dot( X[dic['user']-1,:] , Y[:,dic['movie']-1] )
-    MAE += abs( prediction - dic['rating'] )
-  MAE /= float(len(testU1))
-  print "MAE= %f\n\n"%MAE
-  remindMAE.append(MAE)
-  #~ if iteration in [0,1,2,9,34]:
-    #~ XY=dot(X,Y)
-    #~ plt.imshow(XY, interpolation='none')
-    #~ plt.ylabel('User Id')
-    #~ plt.xlabel('Film Id')
-    #~ plt.title('X*Y product')
-    #~ plt.savefig("it%d-k%d-l%d.png"%(iteration+1,k,100*lambda_),dpi=300,format='png')
+    Y[:,i] = linalg.solve(  dot( XTWi , X ) + lambda_*eye(k) , dot( XTWi , R[:,i] ) )
+  print 'Computation time:', time() - start_time ,"sec"
+  
+print 'Computation time in seconds:', time() - start_time_global
 
-plt.plot(range(nbrIter),remindMAE)
-plt.title('Mean Absolute Error = f(nbIter)')
-plt.suptitle('MAE with predictions based on the product X*Y')
-plt.xlabel('nbrIter')
-plt.ylabel('MAE')
-plt.ylim(0.73,0.80)
-print min(remindMAE)
-pl.savefig("MAE-least-squares-k%d-l%d.png"%(k,100*lambda_),dpi=72,format='png')
+print dot(X,Y)
 
 
+#====================== Make a prediction ==============================
+dic = testU1[1]
+start_time = time()
+prediction=dot( X[dic['user']-1,:] , Y[:,dic['movie']-1] )
+print 'Prediction obtained in ', time() - start_time ,"seconds.\n"
+'''
+
+
+
+#====================== Recommandations ================================
+nRec = 20
+userID = 944
+
+Recommend = []
+rated = []
+
+XuY = dot(X[userID-1,:] , Y)
+
+for rating in baseU1:
+  if rating['user'] == userID:
+    rated.append(rating['movie'])
+for movie in xrange(Nmovies):
+  note = XuY[movie]
+  if movie not in rated and note>=3:
+    Recommend.append( (note,movie) )
+
+Recommend.sort()
+Recommend = Recommend[-nRec:]
+Recommend.reverse()
+print "We recommend to user %d the following movies:"%userID
+for movie in Recommend:
+  print Items[movie[1]]['name']

@@ -9,7 +9,7 @@
 
 
 \begin{document}
-\title{Projet A.L.A.M.\\ Systèmes de recommandation DIY}
+\title{Algèbre Linéaire et Analyse Matricielle\\ Projet: \\ Systèmes de recommandation do-it-yourself}
 \date{\today}
 \author{Louis Becquey - 3BIM}
 \maketitle
@@ -41,7 +41,11 @@ On utilisera \texttt{ numpy.linalg.svd() } pour calculer les décompositions en 
 Donc à partir de $U$ de taille $m\times m$, $S$ de taille $m \times m$ et $V'$ de taille $m \times n$, on ne garde que $U_k$ une matrice de taille $m \times k$, $S_k$ de taille $k \times k$ et $V'_k$ de taille $k \times n$.
 $$R \approx U_kS_kV'_k$$
 
-$\Rightarrow$ Comprendre Xk et Yk, et Xk(u,) et Yk(:,i)
+\begin{figure}
+\centering
+\includegraphics[scale=0.2]{R-Approximation-By-Movie.png}
+\caption{Exemple d'approximation de R (remplie avec les moyennes des films) en ne conservant que 30 valeurs singulières}
+\end{figure}
 
 \newpage
 \section{Question D - Qualité de la prédiction par SVD}
@@ -62,11 +66,28 @@ On obtient, pour Rr comme pour Rc, une erreur d'environ 0,06 étoile, ce qui est
 
 En effet, l'approximation de la matrice permet d'\textbf{économiser énormément d'espace de stockage} (dans notre exemple: $943\times1682=1586126$ contre $943\times12+1682\times12+12\times12=31644$ soit un facteur 50). En revanche, le \textbf{temps de calcul est plus long} puisque l'on doit calculer deux produits pour obtenir le résultat. Et ceci pour une \textbf{différence de qualité de précision faible} étant donné la MAE de la méthode en général face aux réelles valeurs de l'échantillon test (0,06 contre 0,79).
 
+\newpage
 \section{Question E - Théorie}
 Montrons que si une matrice A est réelle, alors elle admet une décomposition en valeurs singulières $A=U \Sigma V^{*}$, avec U et V des matrices à coefficients réels.
 
-$\Rightarrow$ Euh...
+On a U matrice $m*m$ unitaire, V matrice $n*n$ unitaire et $\Sigma$ matrice diagonale à coefficients réels positifs $m*n$.\\
 
+On sait que la matrice $A^*A$ est une matrice réelle symétrique $n*n$ à valeurs positives. Ainsi, elle est diagonalisable et admet des valeurs propres réelles positives $(\lambda_1,...,\lambda_n)$ et une base orthonormée de vecteurs propres associés ($V_1,...,V_n$) tels que $$A^*AV_i=\lambda_i V_i$$
+et $$ V_i^* A^*AV_j=\lambda_j V_i^* V_j = \lambda_j \delta_{ij}$$
+
+On pose $\sigma_j=\sqrt{\lambda_j}$ et pour les $\sigma_j>0$ (par exemple pour j=0,...,r), $U_j=\frac{AV_j}{\sigma_j}$.\\
+Les ($U_1,...,U_r$) forment une famille orthonormée de I\!R$^r$ que l'on prolonge en base orthonormée de I\!R$^m$. Alors, on obtient:
+$$(U^*AV)_{ij} = U_i^*AV_j = \frac{V_i^*A^*AV_j}{\sigma_i} = \frac{\lambda_j \delta_{ij}}{\sigma_i} = \sigma_j \delta_{ij} $$
+pour $j\leq r $ et 0 sinon.\\
+
+On a donc $U^* A V = \Sigma$, donc $A=U \Sigma V^{*}$. On a prouvé que U et V sont des matrices à coefficients réels.\\
+
+De plus, on a les égalités suivantes:
+$$ AA^*= U \Sigma V^{*} V \Sigma^* U^*  =U\Sigma\Sigma^*U^* $$
+$$ A^*A= A= V \Sigma^* U^* U \Sigma V^{*} = V \Sigma^* \Sigma V^*$$
+Ainsi, les matrices $U$ et $V$ contiennent les vecteurs propres associés à $AA^*$ et $A^*A$ et $\Sigma$ contient les racines carrées des valeurs propres associées à $AA^*$ et $A^*A$.
+
+\newpage
 \section{Question F - Problème des moindres carrés pour méthode alternée}
 On a pour objectif d'obtenir $X.Y\approx R$. Le rôle de la ligne $X_u$ dans ce produit est de permettre de calculer les valeurs de la ligne $R_u$ dans la matrice finale. Ainsi, 
 $$X_u.Y\approx R_u$$
@@ -123,10 +144,11 @@ $$\text{Donc }(X^*diag(W_i)X+\lambda I)Y_i=X^*diag(W_i)R_i$$
 On a transformé le problème des moindres carrés non linéaire en deux problèmes linéaires (\textit{de type $A.x=b$ avec A et b connus}), qu'on va résoudre par une approche itérative: prendre deux matrices X et Y arbitraires (pleines de 1), estimer X, puis estimer Y avec ce X, puis recommencer un certain nombre d'itérations en espérant converger vers des solutions minimisant la MAE:
 \newpage
 \begin{table}[h]
+\centering
 \begin{tabular}{cc}
-\subfloat[Pour k=3 ; $\lambda=0.02$]{\includegraphics[scale=0.3]{MAE-least-squares-k3-l2.png}}
+\subfloat[Pour k=3 ; $\lambda=0.02$]{\includegraphics[scale=0.4]{MAE-least-squares-k3-l2.png}}
 &
-\subfloat[Pour k=3 ; $\lambda=0.80$]{\includegraphics[scale=0.3]{MAE-least-squares-k3-l80.png}}
+\subfloat[Pour k=3 ; $\lambda=0.80$]{\includegraphics[scale=0.4]{MAE-least-squares-k3-l80.png}}
 \end{tabular}
 \end{table}
 
@@ -151,7 +173,7 @@ On a transformé le problème des moindres carrés non linéaire en deux problè
 &
 \subfloat[X*Y à la $10^e$ itération]{\includegraphics[scale=0.2]{it10-k3-l80.png}}
 &
-\subfloat[X*Y à la $50^e$ itération]{\includegraphics[scale=0.2]{it35-k3-l80.png}}
+\subfloat[X*Y à la $50^e$ itération]{\includegraphics[scale=0.2]{it50-k3-l80.png}}
 \end{tabular}
 \caption{Pour k=3, $\lambda$=0.80}
 \end{table}
@@ -187,8 +209,128 @@ On a transformé le problème des moindres carrés non linéaire en deux problè
 &
 \subfloat[X*Y à la $10^e$ itération]{\includegraphics[scale=0.2]{it10-k12-l80.png}}
 &
-\subfloat[X*Y à la $50^e$ itération]{\includegraphics[scale=0.2]{it35-k12-l80.png}}
+\subfloat[X*Y à la $35^e$ itération]{\includegraphics[scale=0.2]{it35-k12-l80.png}}
 \end{tabular}
 \caption{Pour k=12, $\lambda$=0.80}
 \end{table}
+
+On voit qu'on observe une homogénéisation des notes au bout d'un certain nombre d'itérations.\\
+Attention cependant: Il s'agit possiblement de fausses observations dues à la façon dont les couleurs sont gérées ci-dessus. 
+Si certains points très discrets sont loin hors de l'intervalle [0;5], ils pourraient faire passer toutes les notes de cet intervalle pour des notes "moyennes" vertes.\\
+
+\newpage
+
+Pour ce qui est de la convergence de cet algorithme vers une solution, on obtient bien des solutions qui se stabilisent avec les itérations, et ceci quelques soient k et $\lambda$:
+
+\begin{table}[h]
+\begin{tabular}{cc}
+\subfloat[à 5 itérations]{\includegraphics[scale=0.4]{MAE-least-squares-5.png}}
+&
+\subfloat[à 8 itérations]{\includegraphics[scale=0.4]{MAE-least-squares-8.png}}\\
+\subfloat[à 10 itérations]{\includegraphics[scale=0.4]{MAE-least-squares-10.png}}
+&
+\subfloat[à 35 itérations]{\includegraphics[scale=0.4]{MAE-least-squares-35.png}}\\
+\end{tabular}
+\end{table}
+On retiendra que les meilleurs résultats sont obtenus pour de petites valeurs de k et de grandes valeurs de $\lambda$.\\
+
+On retiendra également qu'on converge bien vers un résultat stable lorsqu'on multiplie les itérations, cependant, on ne converge pas toujours vers une solution minimisant le plus la MAE.\\
+C'est cohérent: $\lambda$ étant le paramètre 'distance' que l'on s'autorise à tolérer entre notre approximation $X\times Y$ et la matrice R, si l'on prend une grande valeur, on a besoin de moins d'itérations avant de trouver une solution qui fonctionne.\\
+\newpage
+
+\subparagraph{A propos du temps de calcul:}
+Pour une itération, c'est à dire le calcul successif de X puis de Y, on procède à la résolution d'un système linéaire pour chaque ligne de X puis pour chaque colonne de Y:\\
+
+Pour rappel, on a:\\
+$$R = X.Y$$
+$$(n\times m) = (n\times k)(k\times m)$$
+\begin{figure}[h!]
+\centering
+\includegraphics[scale=0.5]{CodeCogsEqn.png}
+\end{figure}
+
+Ainsi, on résout à chaque itération (n+m) systèmes Ax=b de taille k:
+$$
+n\times \left[  \begin{pmatrix}
+ &\dots  & \\ 
+\vdots &  &\vdots \\ 
+ &\dots  & 
+\end{pmatrix}
+\begin{pmatrix}
+\\ 
+\vdots \\ 
+\\
+\end{pmatrix}
+=
+\begin{pmatrix}
+\\ 
+\vdots \\ 
+\\
+\end{pmatrix}\right ]
++m\times \left[  \begin{pmatrix}
+ &\dots  & \\ 
+\vdots &  &\vdots \\ 
+ &\dots  & 
+\end{pmatrix}
+\begin{pmatrix}
+\\ 
+\vdots \\ 
+\\
+\end{pmatrix}
+=
+\begin{pmatrix}
+\\ 
+\vdots \\ 
+\\
+\end{pmatrix}\right ]
+$$
+
+Là aussi, c'est cohérent avec les résultats observés sur la MAE: Plus la complexité du problème est grande (k est grand), plus l'approximation devient floue.
+\newpage
+\section{Question G - Comparaison des méthodes de prédiction}
+On considère les méthodes avec les paramètres qui minimisent la MAE, à savoir k=12 pour l'approximation par SVD, et k=2, $\lambda$=0.85 et 20 itérations pour l'approximation par moindres carrés alternés:
+\begin{table}[h]
+\begin{tabular}{|l|c|c|}
+\hline
+ & Approximation par SVD & Approximation par moindres carrés\\
+\hline
+Temps de calcul de X et Y & $\approx$5 sec & $\approx$24 sec/iter (20 iter = 8 min) \\
+\hline
+Temps de prédiction & 40 $\mu sec$ & 9 $\mu sec$\\
+\hline
+MAE moyenne & 0.79 & 0.73 \\
+\hline
+\end{tabular}
+\end{table}
+\subparagraph{A propos du temps de prédiction}, les prédictions par SVD sont un peu plus longues à être calculées, puisqu'on a un double-produit de vecteurs au lieu d'un simple. Ce problème peut rapidement être résolu en calculant les matrices de features $X_k$ et $Y_k$, on aurait alors les mêmes temps de calcul pour chaque prédiction.\\
+
+\subparagraph{Pour ce qui est du temps de construction}, la méthode des moindres carrés est beaucoup plus (trop) longue, pour n'obtenir au final une MAE que légèrement meilleure à la SVD.\\
+
+Le principal intérêt de cette méthode est, comme on l'a vu sur les quelques images des produits X*Y précédentes, de pouvoir ajuster les paramètres pour augmenter ou diminuer l'homogénéité des notes. On peut, si on le souhaite, prendre k et $\lambda$ avec un nombre d'itérations précis de façon à obtenir très peu de notes fortement démarquées d'une masse moyenne. En bref, la seconde méthode est plus personnalisable.
+
+\section{Question H - Amélioration des méthodes}
+La première piste d'amélioration évidente serait de mélanger les deux méthodes: 
+\begin{itemize}
+\item Réaliser une approximation par SVD
+\item Calculer les matrices de features associées ($X_k$ et $Y_k$)
+\item Réutiliser ces matrices comme entrée pour les moindres carrés alternés
+\end{itemize}
+Ainsi, avec ne serait-ce qu'une seule itération des moindres carrés, on peut calculer des matrices de features avec une MAE de 0.74, et ceci en une trentaine de secondes.\\
+Il s'agit d'un plutôt bon compromis.\\
+
+\vspace{1cm}
+
+Une deuxième piste d'amélioration pour la méthode des moindres carrés: On peut chercher à limiter la divergence des valeurs hors de l'intervalle [0,5] au fur et à mesure des itérations.\\
+On pourrait alors:
+\begin{itemize}
+\item Soit remettre systématiquement à 5 les valeurs hors intervalle.
+\item Soit normaliser ($ \times \frac{5}{max(R_{u,i})}$) complètement ces valeurs, de façon à toutes les ramener dans l'intervalle, en conservant la proportion de l'écart entre notes. Cette méthode demandera donc nécessairement encore plus de temps de calcul.
+\end{itemize}
+Il faudrait trouver un moyen de prédire qu'une valeur $R_{u,i}$ sera hors intervalle sans avoir à calculer explicitement la matrice R, ni avoir besoin de calculer toutes les prédictions une à une.\\
+ 
+ \section{Question I - Tester les Recommandations}
+ 
+ 
+ 
+ 
 \end{document}
